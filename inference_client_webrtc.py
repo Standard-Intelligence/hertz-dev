@@ -10,7 +10,6 @@ import requests
 import time
 import torch
 import torchaudio
-import pydub
 
 import av
 import streamlit as st
@@ -59,6 +58,32 @@ class AudioClient:
     
     def downsample(self, audio_data: np.ndarray) -> np.ndarray:
         return self._resample(audio_data, self.downsampler)
+    
+    def from_s16_format(self, audio_data: np.ndarray, channels: int) -> np.ndarray:
+        if channels == 2:
+            audio_data = audio_data.reshape(-1, 2).T
+        else:
+            audio_data = audio_data.reshape(-1)
+        return audio_data
+    
+    def to_s16_format(self, audio_data: np.ndarray):
+        if len(audio_data.shape) == 2 and audio_data.shape[0] == 2:
+            audio_data = audio_data.T.reshape(1, -1)
+        elif len(audio_data.shape) == 1:
+            audio_data = audio_data.reshape(1, -1)
+        return audio_data
+    
+    def to_channels(self, audio_data: np.ndarray, channels: int) -> np.ndarray:
+        current_channels = audio_data.shape[0] if len(audio_data.shape) == 2 else 1
+        if current_channels == channels:
+            return audio_data
+        elif current_channels == 1 and channels == 2:
+            audio_data = np.tile(audio_data, 2).reshape(2, -1)
+        elif current_channels == 2 and channels == 1:
+            audio_data = audio_data.astype(np.float32) / 32767.0
+            audio_data = audio_data.mean(axis=0)
+            audio_data = (audio_data * 32767.0).astype(np.int16)
+        return audio_data
 
     async def process_audio(self, audio_data: np.ndarray) -> np.ndarray:
         if self.ws is None:
@@ -92,18 +117,12 @@ class AudioClient:
     async def queued_audio_frames_callback(self, frames: List[av.AudioFrame]) -> List[av.AudioFrame]:
         out_frames = []
         for frame in frames:
-            # Read in audio and convert to mono
+            # Read in audio
             audio_data = frame.to_ndarray()
-            sound = pydub.AudioSegment(
-                data=audio_data.tobytes(),
-                sample_width=frame.format.bytes,
-                frame_rate=frame.sample_rate,
-                channels=len(frame.layout.channels),
-            )
-            sound = sound.set_channels(CHANNELS)
-            audio_data = np.array(sound.get_array_of_samples())
 
-            # Downsample audio
+            # Convert input audio from s16 format, convert to `CHANNELS` number of channels, and downsample
+            audio_data = self.from_s16_format(audio_data, len(frame.layout.channels))
+            audio_data = self.to_channels(audio_data, CHANNELS)
             audio_data = self.downsample(audio_data)
 
             # Add audio to input buffer
@@ -138,13 +157,12 @@ class AudioClient:
             # Output silence if no audio data available
             if audio_data is None:
                 # output silence
-                audio_data = np.zeros(320, dtype=np.int16)
+                audio_data = np.zeros(out_samples, dtype=np.int16)
             
-            # Upsample output audio
+            # Upsample output audio, convert to original number of channels, and convert to s16 format
             audio_data = self.upsample(audio_data)
-
-            # Repeat audio data to match the original number of channels
-            audio_data = np.repeat(audio_data, 2).reshape(1, -1)
+            audio_data = self.to_channels(audio_data, len(frame.layout.channels))
+            audio_data = self.to_s16_format(audio_data)
 
             # return audio data as AudioFrame
             new_frame = av.AudioFrame.from_ndarray(audio_data, format=frame.format.name, layout=frame.layout.name)
