@@ -24,3 +24,6 @@ pip install -r requirements_webrtc.txt
 # Run the client
 streamlit run inference_client_webrtc.py
 ```
+Then, access the client at [http://localhost:8501](http://localhost:8501).
+
+**Note**: If you host the streamlit client anywhere other than `localhost` you may need to use a STUN server to establish the connection. You can do this by passing the `--use_ice_servers` flag: `streamlit run inference_client_webrtc.py -- --use_ice_servers`.
