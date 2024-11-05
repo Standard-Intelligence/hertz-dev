@@ -17,3 +17,10 @@ We recommend starting by using `inference.ipynb` to generate one- or two-channel
 Then, you can use `inference_client.py` and `inference_server.py` to talk to the model live through your microphone.
 These are currently experimental, and have primarily been tested with Ubuntu on the server and MacOS on the client.
 
+Alternatively, you can use `inference_client_webrtc.py`, which is built on [streamlit](https://streamlit.io/) + [streamlit-webrtc](https://github.com/whitphx/streamlit-webrtc) and runs in a browser:
+```bash
+# Install additional requirements
+pip install -r requirements_webrtc.txt
+# Run the client
+streamlit run inference_client_webrtc.py
+```
