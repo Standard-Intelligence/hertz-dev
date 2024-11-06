@@ -21,6 +21,7 @@ class AudioClient:
         # Convert ws:// to http:// for the base URL
         self.base_url = server_url.replace("ws://", "http://")
         self.server_url = f"{server_url}/audio"
+        self.sound_check = False
         
         # Set temperatures if provided
         if any(t is not None for t in [token_temp, categorical_temp, gaussian_temp]):
@@ -140,7 +141,8 @@ class AudioClient:
             
             # Process audio if available and add resulting audio to output buffer
             if audio_data is not None:
-                audio_data = await self.process_audio(audio_data)
+                if not self.sound_check:
+                    audio_data = await self.process_audio(audio_data)
                 if self.out_buffer is None:
                     self.out_buffer = audio_data
                 else:
@@ -208,6 +210,7 @@ if __name__ == "__main__":
         st.session_state.audio_client = audio_client
 
     with st.sidebar:
+        st.markdown("## Inference Settings")
         token_temp_default = args.token_temp if args.token_temp is not None else 0.8
         token_temp = st.slider("Token Temperature", 0.05, 2.0, token_temp_default, step=0.05)
         categorical_temp_default = args.categorical_temp if args.categorical_temp is not None else 0.4
@@ -218,14 +221,22 @@ if __name__ == "__main__":
             response_message = audio_client.set_temperature_and_echo(token_temp, categorical_temp, gaussian_temp)
             st.write(response_message)
 
+        st.markdown("## Microphone Settings")
+        audio_client.sound_check = st.toggle("Sound Check (Echo)", value=False)
+        echo_cancellation = st.toggle("Echo Cancellation*‡", value=False)
+        noise_suppression = st.toggle("Noise Suppression*", value=False)
+        st.markdown(r"\* *Restart stream to take effect*")
+        st.markdown("‡ *May cause audio to cut out*")
+
     # Use a free STUN server from Google if --use_ice_servers is given
     # (found in get_ice_servers() at https://github.com/whitphx/streamlit-webrtc/blob/main/sample_utils/turn.py)
     rtc_configuration = {"iceServers": [{"urls": ["stun:stun.l.google.com:19302"]}]} if args.use_ice_servers else None
+    audio_config = {"echoCancellation": echo_cancellation, "noiseSuppression": noise_suppression}
     webrtc_streamer(
         key="streamer",
         mode=WebRtcMode.SENDRECV,
         rtc_configuration=rtc_configuration,
-        media_stream_constraints={"audio": True, "video": False},
+        media_stream_constraints={"audio": audio_config, "video": False},
         queued_audio_frames_callback=audio_client.queued_audio_frames_callback,
         on_audio_ended=audio_client.stop,
         async_processing=True,
