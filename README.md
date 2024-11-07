@@ -28,4 +28,4 @@ streamlit run inference_client_webrtc.py
 ```
 Then, access the client at [http://localhost:8501](http://localhost:8501).
 
-**Note**: If you host the streamlit client anywhere other than `localhost` you may need to use a STUN server to establish the connection. You can do this by passing the `--use_ice_servers` flag: `streamlit run inference_client_webrtc.py -- --use_ice_servers`.
+**Note**: If you host the streamlit client anywhere other than `localhost` you will need to connect with https to avoid errors (see [here](https://github.com/whitphx/streamlit-webrtc?tab=readme-ov-file#serving-from-remote-host) for more info). An easy workaround is to `ssh` from the client into the server with port forwarding `ssh -L 127.0.0.1:8501:remote-host:8501 user@remote-host`, after which you can access the client at [http://localhost:8501](http://localhost:8501) as usual. If serving from a remote host with https, you may need to use a STUN server to establish the connection. You can do this by passing the `--use_ice_servers` flag: `streamlit run inference_client_webrtc.py -- --use_ice_servers`.
