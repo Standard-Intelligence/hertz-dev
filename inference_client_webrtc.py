@@ -198,6 +198,7 @@ if __name__ == "__main__":
     SAMPLE_RATE = 16000
     BLOCK_SIZE = 2000
     CHANNELS = 1
+    
     st.title("hertz-dev webrtc demo!")
     st.markdown("""
     Welcome to the audio processing interface! Here you can talk live with hertz.
@@ -208,6 +209,7 @@ if __name__ == "__main__":
     
     To begin, click the START button below and allow microphone access.
     """)
+
     audio_client = st.session_state.get("audio_client")
     if audio_client is None:
         audio_client = AudioClient(
