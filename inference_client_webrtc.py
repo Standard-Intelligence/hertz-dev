@@ -198,7 +198,16 @@ if __name__ == "__main__":
     SAMPLE_RATE = 16000
     BLOCK_SIZE = 2000
     CHANNELS = 1
+    st.title("hertz-dev webrtc demo!")
+    st.markdown("""
+    Welcome to the audio processing interface! Here you can talk live with hertz.
+    - Process audio in real-time through your microphone
+    - Adjust various temperature parameters for inference
+    - Test your microphone with sound check mode
+    - Enable/disable echo cancellation and noise suppression
     
+    To begin, click the START button below and allow microphone access.
+    """)
     audio_client = st.session_state.get("audio_client")
     if audio_client is None:
         audio_client = AudioClient(
