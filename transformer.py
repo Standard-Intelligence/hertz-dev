@@ -191,13 +191,12 @@ class GQA(nn.Module):
     def _sdpa(self, q: Tensor, k: Tensor, v: Tensor) -> Tensor:
         k = k.repeat_interleave(self.n_heads // self.kv_heads, dim=2)
         v = v.repeat_interleave(self.n_heads // self.kv_heads, dim=2)
-        with nn.attention.sdpa_kernel(SDPBackend.FLASH_ATTENTION) if k.device.type == 'cuda' else nullcontext():
-            x = F.scaled_dot_product_attention(
-                q.transpose(1, 2), 
-                k.transpose(1, 2), 
-                v.transpose(1, 2), 
-                is_causal=False if (q.size(1) != k.size(1)) else self.causal,
-            )
+        x = F.scaled_dot_product_attention(
+            q.transpose(1, 2), 
+            k.transpose(1, 2), 
+            v.transpose(1, 2), 
+            is_causal=False if (q.size(1) != k.size(1)) else self.causal,
+        )
         x = x.transpose(1, 2).contiguous()
         return x
 

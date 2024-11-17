@@ -2,7 +2,7 @@ torch==2.5.1
 torchaudio==2.5.1
 einops==0.8.0
 tqdm==4.66.6
-ipython==8.29.0
+ipython==8.18.1
 numpy==1.26.3
 soundfile==0.12.1
 websockets==13.1
@@ -11,3 +11,5 @@ sounddevice==0.5.1
 matplotlib==3.9.2
 fastapi==0.115.4
 uvicorn==0.32.0
+huggingface-hub[hf_transfer]==0.26.2
+IProgress==0.4
